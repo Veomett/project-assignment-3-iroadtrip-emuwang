@@ -1,17 +1,16 @@
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
 /*Questions:
 same input files all the time?
-undirected weighted graph so adjacency list?
-repeat path finding if path doesnt exist given 2 existing countries?
+inconsistent naming: "Korea, People's Republic of" and "Macedonia (Former Yugoslav Republic of)"
  */
 
-
 /*TODO:
-   handle countries with an alias and duplicate countries in statename
+   import all object arraylists into graph
+   handle countries with weird alias and commas? example: Korea, People's Republic of
    handle for diff input files i guess?
-   import all object arraylists into file
  */
 
 public class IRoadTrip {
@@ -31,7 +30,8 @@ public class IRoadTrip {
 
     public List<String> findPath (String country1, String country2) {
         // Replace with your code
-        return null;
+        List<String> path = new LinkedList<>();
+        return path;
     }
 
 
@@ -56,12 +56,14 @@ public class IRoadTrip {
         }
 
         List<String> path = findPath(country1, country2);
-        if (path != null) {
+        if (path.size() > 0) {
             for (String p : path) {
                 System.out.println(p);
             }
+            acceptUserInput();
         } else {
             System.out.println("Path does not exist between these two countries.");
+            acceptUserInput();
         }
     }
 

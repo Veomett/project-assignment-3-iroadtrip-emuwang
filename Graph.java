@@ -46,6 +46,7 @@ class stateNameDetails {
     protected int stateNum;
     protected String stateID;
     protected String countryName;
+    protected String alias;
     protected String end;
 
     public int getStateNum() {
@@ -58,6 +59,9 @@ class stateNameDetails {
 
     public String getCountryName() {
         return countryName;
+    }
+    public String getAlias() {
+        return alias;
     }
 
     public String getEnd() {
@@ -95,8 +99,9 @@ public class Graph { //implementation for graph structure as well as its functio
      */
     public boolean checkExistence(String country) {
         for (stateNameDetails s: snDetails) {
-            if (country.equalsIgnoreCase(s.getCountryName())) {
-                if (s.end.equals("2020-12-31")) //check if country still exists
+            System.out.println("Checking for " + country + " in " + s.getCountryName() + " and " + s.getAlias());
+            if (country.equalsIgnoreCase(s.getCountryName()) || country.equalsIgnoreCase(s.getAlias())) {
+                //if (s.end.equals("2020-12-31")) //check if country still exists
                     return true;
             }
         }
@@ -225,23 +230,35 @@ public class Graph { //implementation for graph structure as well as its functio
                 String[] strArr = str.split("\t"); //split lines from csv file using the tab character
                 stateNameDetails temp = new stateNameDetails(); //initialize object
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
-                    switch (i) {
-                        case 0:
-                            temp.stateNum = Integer.parseInt(strArr[i]);
-                            break;
-                        case 1:
-                            temp.stateID = strArr[i];
-                            break;
-                        case 2:
-                            temp.countryName =  strArr[i];
-                            break;
-                        case 4:
-                            temp.end = strArr[i];
-                            break;
+                    if (strArr[4].equals("2020-12-31")) {
+                        switch (i) {
+                            case 0:
+                                temp.stateNum = Integer.parseInt(strArr[i]);
+                                break;
+                            case 1:
+                                temp.stateID = strArr[i];
+                                break;
+                            case 2:
+                                if (strArr[i].contains("(")) {
+                                    String[] smallStr = strArr[i].split("\\(");
+                                    temp.countryName = smallStr[0].trim();
+                                    temp.alias = smallStr[1].replace(")", "").trim();
+                                } else {
+                                    temp.countryName = strArr[i];
+                                }
+                                break;
+                            case 4:
+                                temp.end = strArr[i];
+                                break;
+                        }
                     }
                 }
-                snDetails.add(temp);
+                if (temp.countryName != null) {
+                    snDetails.add(temp);
+                    System.out.println("Added country: " + temp.getCountryName() + ", alias: " + temp.getAlias());
+                }
             }
+            System.out.println("Size of snDetails: " + snDetails.size());
             bfReader.close();
         } catch (Exception e) {
             System.out.println(e);
