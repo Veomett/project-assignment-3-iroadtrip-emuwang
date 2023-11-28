@@ -1,12 +1,28 @@
 import java.util.List;
+import java.util.Scanner;
+
+/*Questions:
+same input files all the time?
+how many vertices in graph? does program find on its own or can we use preset values?
+undirected weighted graph so adjacency list?
+repeat path finding if path doesnt exist given 2 existing countries?
+stick to given functions or can change?
+ */
+
+
+/*TODO:
+   parse file for borders.txt and make object
+   handle countries with an alias
+   handle for diff input files i guess?
+ */
 
 public class IRoadTrip {
 
-
+    Graph graph;
     public IRoadTrip (String [] args) {
         // Replace with your code
+        graph = new Graph(args[0], args[1], args[2]);
     }
-
 
     public int getDistance (String country1, String country2) {
         // Replace with your code
@@ -21,10 +37,44 @@ public class IRoadTrip {
 
 
     public void acceptUserInput() {
-        // Replace with your code
-        System.out.println("IRoadTrip - skeleton");
+        Scanner in = new Scanner(System.in);
+        String country1;
+        String country2;
+        while (true) {
+            while (true) {
+                System.out.print("Enter the name of the first country (type EXIT to quit): ");
+                country1 = in.nextLine();
+                if (checkValidity(country1))
+                    break;
+            }
+            while (true) {
+                System.out.print("Enter the name of the second country (type EXIT to quit): ");
+                country2 = in.nextLine();
+                if (checkValidity(country2))
+                    break;
+            }
+            break;
+        }
+
+        List<String> path = findPath(country1, country2);
+        if (path != null) {
+            for (String p : path) {
+                System.out.println(p);
+            }
+        } else {
+            System.out.println("Path does not exist between these two countries.");
+        }
     }
 
+    private boolean checkValidity (String country) {
+        if (country.equals("EXIT"))
+            System.exit(0);
+        if (!graph.checkExistence(country)) {
+            System.out.println("Invalid country name. Please enter a valid country name.");
+            return false;
+        }
+        return true;
+    }
 
     public static void main(String[] args) {
         IRoadTrip a3 = new IRoadTrip(args);
