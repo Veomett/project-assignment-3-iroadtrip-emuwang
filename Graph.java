@@ -1,42 +1,75 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 class capDistDetails {
-    public int numa;
-    public String ida;
-    public int numb;
-    public String idb;
-    public int kmdist;
+    protected int numa;
+    protected String ida;
+    protected int numb;
+    protected String idb;
+    protected int kmdist;
+
+    public int getNuma() {
+        return numa;
+    }
+
+    public String getIda() {
+        return ida;
+    }
+
+    public int getNumb() {
+        return numb;
+    }
+
+    public String getIdb() {
+        return idb;
+    }
+
+    public int getKmdist() {
+        return kmdist;
+    }
 }
 
 class stateNameDetails {
-    public int stateNum;
-    public String stateID;
-    public String countryName;
-    public String start;
-    public String end;
-    public LocalDate date;
+    protected int stateNum;
+    protected String stateID;
+    protected String countryName;
+    protected String end;
+
+    public int getStateNum() {
+        return stateNum;
+    }
+
+    public String getStateID() {
+        return stateID;
+    }
+
+    public String getCountryName() {
+        return countryName;
+    }
+
+    public String getEnd() {
+        return end;
+    }
 }
 
 class bordersDetails {
     public String country;
-    public String[] conCountry;
-    public int[] dist;
+    public HashMap<String, Integer> conInfo = new HashMap<>();
 }
 
 public class Graph { //implementation for graph structure as well as its functions like dijkstras
     //use adjacency list for undirected weighted graph
-    private LinkedList<String>[] adjacencyList;
-    private capDistDetails[] cdDetails;
-    private stateNameDetails[] snDetails;
-    bordersDetails[] bDetails;
 
-    /**
-     * constructor that reads in the data and creates the graph
-     */
+    private LinkedList<String>[] adjacencyList;
+    private List<capDistDetails> cdDetails = new ArrayList<>();
+    private List<stateNameDetails> snDetails = new ArrayList<>();
+    private List<bordersDetails> bDetails = new ArrayList<>();
+
     public Graph (String bordersFile, String capdistFile, String statenameFile) {
         adjacencyList = new LinkedList[216];
         makeBorderDetails(bordersFile);
@@ -44,33 +77,72 @@ public class Graph { //implementation for graph structure as well as its functio
         makeStateNameDetails(statenameFile);
     }
 
-    /**
-     * @param country to check for existence
-     * @return true/false depending on if the country is on the list or does not exist anymore
-     */
     public boolean checkExistence(String country) {
-        for (int i = 0; i < snDetails.length; i++) {
-            if (country.equalsIgnoreCase(snDetails[i].countryName)) {
-                if (snDetails[i].end.equalsIgnoreCase("2020-12-31"))
+        for (stateNameDetails s: snDetails) {
+            if (country.equalsIgnoreCase(s.getCountryName())) {
+                if (s.end.equals("2020-12-31"))
                     return true;
             }
         }
         return false;
     }
 
-    /**
-     * helper function to parse through given file and input data into a capDistDetails array
-     * @return capDistDetails[]
-     */
+    private HashMap<String, Integer> getConInfo (String str) {
+        HashMap<String, Integer> temp = new HashMap<>();
+        String[] fullStr = str.split(";");
+        for (int i = 0; i < fullStr.length; i++) {
+            String country = fullStr[i].split("[0-9]")[0].replaceAll("\\s", "");
+            String dist = fullStr[i].replaceAll("[^0-9]", "");
+            temp.put(country, Integer.parseInt(dist));
+        }
+        return temp;
+    }
+
+    private void makeBorderDetails(String fileName) {
+        File f = new File(fileName);
+        if (!f.exists()) {
+            System.out.println("Given file for Border Details does not exist. Proceeding with default file.");
+            f = new File("borders.txt");
+        }
+        try {
+            BufferedReader bfReader = new BufferedReader(new FileReader(f));
+            while (true) {
+                String str = bfReader.readLine(); //read second line
+                if (str == null) //loop until next line is null/empty
+                    break;
+                String[] strArr = str.split("="); //split lines from csv file using "="
+                bordersDetails temp = new bordersDetails();
+                for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
+                    switch (i) {
+                        case 0:
+                            temp.country = strArr[i];
+                            System.out.println("Country found: " + temp.country);
+                            break;
+                        case 1:
+                            if (!strArr[i].isBlank()) {
+                                System.out.println("Scan String: " + strArr[i]);
+                                temp.conInfo = getConInfo(strArr[i]);
+                                System.out.println("Details found: " + temp.conInfo);
+                            }
+                            break;
+                    }
+                }
+                bDetails.add(temp);
+            }
+            bfReader.close();
+        } catch (Exception e) {
+            System.out.println(e);
+            System.exit(0);
+        }
+    }
+
     private void makeCapDistDetails(String fileName) {
         File f = new File(fileName);
         if (!f.exists()) {
             System.out.println("Given file for Capital Distance does not exist. Proceeding with default file.");
-            System.exit(0);
+            f = new File("capdist.csv");
         }
         try {
-            cdDetails = new capDistDetails[41006];
-            int count = 0;
             BufferedReader bfReader = new BufferedReader(new FileReader(f));
             String str = bfReader.readLine(); //read first line
             while (true) {
@@ -78,27 +150,27 @@ public class Graph { //implementation for graph structure as well as its functio
                 if (str == null) //loop until next line is null/empty
                     break;
                 String[] strArr = str.split(","); //split lines from csv file using ","
-                cdDetails[count] = new capDistDetails(); //initialize object
+                capDistDetails temp = new capDistDetails();
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
                     switch (i) {
                         case 0:
-                            cdDetails[count].numa = Integer.parseInt(strArr[i]);
+                            temp.numa = Integer.parseInt(strArr[i]);
                             break;
                         case 1:
-                            cdDetails[count].ida = strArr[i];
+                            temp.ida = strArr[i];
                             break;
                         case 2:
-                            cdDetails[count].numb = Integer.parseInt(strArr[i]);
+                            temp.numb = Integer.parseInt(strArr[i]);
                             break;
                         case 3:
-                            cdDetails[count].idb = strArr[i];
+                            temp.idb = strArr[i];
                             break;
                         case 4:
-                            cdDetails[count].kmdist = Integer.parseInt(strArr[i]);
+                            temp.kmdist = Integer.parseInt(strArr[i]);
                             break;
                     }
                 }
-                count++;
+                cdDetails.add(temp);
             }
             bfReader.close();
         } catch (Exception e) {
@@ -107,43 +179,38 @@ public class Graph { //implementation for graph structure as well as its functio
         }
     }
 
-    /**
-     * helper function to parse through given file and input data into a stateNameDetails array
-     * @return stateNameDetails[]
-     */
     private void makeStateNameDetails(String fileName) {
-
-        snDetails = new stateNameDetails[216];
+        File f = new File(fileName);
+        if (!f.exists()) {
+            System.out.println("Given file for State Name does not exist. Proceeding with default file.");
+            f = new File("state_name.csv");
+        }
         try {
-            int count = 0;
-            BufferedReader bfReader = new BufferedReader(new FileReader("state_name.tsv"));
+            BufferedReader bfReader = new BufferedReader(new FileReader(f));
             String str = bfReader.readLine(); //read first line
             while (true) {
                 str = bfReader.readLine(); //read second line
                 if (str == null) //loop until next line is null/empty
                     break;
                 String[] strArr = str.split("\t"); //split lines from csv file using the tab character
-                snDetails[count] = new stateNameDetails(); //initialize object
+                stateNameDetails temp = new stateNameDetails(); //initialize object
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
                     switch (i) {
                         case 0:
-                            snDetails[count].stateNum = Integer.parseInt(strArr[i]);
+                            temp.stateNum = Integer.parseInt(strArr[i]);
                             break;
                         case 1:
-                            snDetails[count].stateID = strArr[i];
+                            temp.stateID = strArr[i];
                             break;
                         case 2:
-                            snDetails[count].countryName =  strArr[i];
-                            break;
-                        case 3:
-                            snDetails[count].start = strArr[i];
+                            temp.countryName =  strArr[i];
                             break;
                         case 4:
-                            snDetails[count].end = strArr[i];
+                            temp.end = strArr[i];
                             break;
                     }
                 }
-                count++;
+                snDetails.add(temp);
             }
             bfReader.close();
         } catch (Exception e) {
@@ -152,7 +219,4 @@ public class Graph { //implementation for graph structure as well as its functio
         }
     }
 
-    private void makeBorderDetails(String fileName) {
-        System.out.println("made it into makeBorderDetails");
-    }
 }

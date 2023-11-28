@@ -3,17 +3,15 @@ import java.util.Scanner;
 
 /*Questions:
 same input files all the time?
-how many vertices in graph? does program find on its own or can we use preset values?
 undirected weighted graph so adjacency list?
 repeat path finding if path doesnt exist given 2 existing countries?
-stick to given functions or can change?
  */
 
 
 /*TODO:
-   parse file for borders.txt and make object
    handle countries with an alias
    handle for diff input files i guess?
+   import all object arraylists into file
  */
 
 public class IRoadTrip {
@@ -22,6 +20,7 @@ public class IRoadTrip {
     public IRoadTrip (String [] args) {
         // Replace with your code
         graph = new Graph(args[0], args[1], args[2]);
+        System.out.println();
     }
 
     public int getDistance (String country1, String country2) {
