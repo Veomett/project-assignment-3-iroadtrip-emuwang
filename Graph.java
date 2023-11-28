@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * object with details from Capital Distance file
+ * removed distance in miles
+ */
 class capDistDetails {
     protected int numa;
     protected String ida;
@@ -34,6 +38,10 @@ class capDistDetails {
     }
 }
 
+/**
+ * object with details from State Name file
+ * removed start date of countries
+ */
 class stateNameDetails {
     protected int stateNum;
     protected String stateID;
@@ -57,6 +65,9 @@ class stateNameDetails {
     }
 }
 
+/**
+ * object with details from Borders file
+ */
 class bordersDetails {
     public String country;
     public HashMap<String, Integer> conInfo = new HashMap<>();
@@ -77,27 +88,41 @@ public class Graph { //implementation for graph structure as well as its functio
         makeStateNameDetails(statenameFile);
     }
 
+    /**
+     * checks if a country exists or not in snDetails
+     * @param country to be searched
+     * @return true/false depending on its existence
+     */
     public boolean checkExistence(String country) {
         for (stateNameDetails s: snDetails) {
             if (country.equalsIgnoreCase(s.getCountryName())) {
-                if (s.end.equals("2020-12-31"))
+                if (s.end.equals("2020-12-31")) //check if country still exists
                     return true;
             }
         }
         return false;
     }
 
+    /**
+     * helper method used in makeBorderDetails() to parse second part of input string for country, dist pair
+     * @param str second part of input string
+     * @return HashMap of country and distance pairs to put into bDetails arraylist
+     */
     private HashMap<String, Integer> getConInfo (String str) {
         HashMap<String, Integer> temp = new HashMap<>();
         String[] fullStr = str.split(";");
         for (int i = 0; i < fullStr.length; i++) {
-            String country = fullStr[i].split("[0-9]")[0].replaceAll("\\s", "");
+            String country = (fullStr[i].split("[0-9]")[0]).strip();
             String dist = fullStr[i].replaceAll("[^0-9]", "");
             temp.put(country, Integer.parseInt(dist));
         }
         return temp;
     }
 
+    /**
+     * helper method to create bDetails arraylist
+     * @param fileName to read from
+     */
     private void makeBorderDetails(String fileName) {
         File f = new File(fileName);
         if (!f.exists()) {
@@ -116,13 +141,10 @@ public class Graph { //implementation for graph structure as well as its functio
                     switch (i) {
                         case 0:
                             temp.country = strArr[i];
-                            System.out.println("Country found: " + temp.country);
                             break;
                         case 1:
                             if (!strArr[i].isBlank()) {
-                                System.out.println("Scan String: " + strArr[i]);
                                 temp.conInfo = getConInfo(strArr[i]);
-                                System.out.println("Details found: " + temp.conInfo);
                             }
                             break;
                     }
@@ -136,6 +158,10 @@ public class Graph { //implementation for graph structure as well as its functio
         }
     }
 
+    /**
+     * helper method to create cdDetails arraylist
+     * @param fileName to read from
+     */
     private void makeCapDistDetails(String fileName) {
         File f = new File(fileName);
         if (!f.exists()) {
@@ -179,6 +205,10 @@ public class Graph { //implementation for graph structure as well as its functio
         }
     }
 
+    /**
+     * helper method to create snDetails arraylist
+     * @param fileName to read from
+     */
     private void makeStateNameDetails(String fileName) {
         File f = new File(fileName);
         if (!f.exists()) {

@@ -9,7 +9,7 @@ repeat path finding if path doesnt exist given 2 existing countries?
 
 
 /*TODO:
-   handle countries with an alias
+   handle countries with an alias and duplicate countries in statename
    handle for diff input files i guess?
    import all object arraylists into file
  */
