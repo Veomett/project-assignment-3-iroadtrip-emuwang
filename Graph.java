@@ -6,90 +6,72 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * object with details from Capital Distance file
- * removed distance in miles
- */
-class capDistDetails {
-    protected int numa;
-    protected String ida;
-    protected int numb;
-    protected String idb;
-    protected int kmdist;
+class Edge {
+    String source;
+    String dest;
+    int dist;
 
-    public int getNuma() {
-        return numa;
+    Edge(String v1, String v2, int d) {
+        source = v1;
+        dest = v2;
+        dist = d;
     }
-
-    public String getIda() {
-        return ida;
-    }
-
-    public int getNumb() {
-        return numb;
-    }
-
-    public String getIdb() {
-        return idb;
-    }
-
-    public int getKmdist() {
-        return kmdist;
-    }
-}
-
-/**
- * object with details from State Name file
- * removed start date of countries
- */
-class stateNameDetails {
-    protected int stateNum;
-    protected String stateID;
-    protected String countryName;
-    protected String alias;
-    protected String end;
-
-    public int getStateNum() {
-        return stateNum;
-    }
-
-    public String getStateID() {
-        return stateID;
-    }
-
-    public String getCountryName() {
-        return countryName;
-    }
-    public String getAlias() {
-        return alias;
-    }
-
-    public String getEnd() {
-        return end;
-    }
-}
-
-/**
- * object with details from Borders file
- */
-class bordersDetails {
-    public String country;
-    public HashMap<String, Integer> conInfo = new HashMap<>();
 }
 
 public class Graph { //implementation for graph structure as well as its functions like dijkstras
     //use adjacency list for undirected weighted graph
 
-    private LinkedList<String>[] adjacencyList;
+    private LinkedList<Edge>[] adjacencyList;
     private List<capDistDetails> cdDetails = new ArrayList<>();
     private List<stateNameDetails> snDetails = new ArrayList<>();
     private List<bordersDetails> bDetails = new ArrayList<>();
 
     public Graph (String bordersFile, String capdistFile, String statenameFile) {
-        adjacencyList = new LinkedList[216];
         makeBorderDetails(bordersFile);
         makeCapDistDetails(capdistFile);
         makeStateNameDetails(statenameFile);
+        adjacencyList = new LinkedList[snDetails.size()];
+        for (int i = 0; i < snDetails.size(); i++) {
+            adjacencyList[i] = new LinkedList<>();
+        }
+        for (int i = 0; i < cdDetails.size(); i++) {
+            String source = getCountryWithID(cdDetails.get(i).ida);
+            String dest = getCountryWithID(cdDetails.get(i).idb);
+            if (source != null && dest != null) {
+                addEdge(source, dest, cdDetails.get(i).getKmdist());
+                System.out.println("going to add edge - countryA: " + getCountryWithID(cdDetails.get(i).ida) + ", countryB: " + getCountryWithID(cdDetails.get(i).idb) + ", dist: " + cdDetails.get(i).getKmdist());
+            }
+        }
+
+        for (int i = 0; i < adjacencyList.length; i++) {
+            for (Edge e: adjacencyList[i]) {
+                System.out.print(e.source + " connects to " + e.dest + ", dist: " + e.dist + "| ");
+            }
+            System.out.println();
+        }
+    }
+
+    private String getCountryWithID(String ID) {
+        for (stateNameDetails s: snDetails) {
+            if (s.getStateID().equals(ID))
+                return s.getCountryName();
+        }
+        System.out.println("Country not found, returning null: " + ID);
+        return null;
+    }
+
+    private void addEdge(String v1, String v2, int weight) {
+        Edge e = new Edge(v1, v2, weight);
+        int index = -1;
+        int count = 0;
+        for (stateNameDetails s: snDetails) {
+            if (s.getCountryName().equals(v1)) {
+                index = count;
+                break;
+            }
+            count++;
+        }
+        adjacencyList[index].add(e);
     }
 
     /**
@@ -266,4 +248,80 @@ public class Graph { //implementation for graph structure as well as its functio
         }
     }
 
+}
+
+
+/**
+ * object with details from Capital Distance file
+ * removed distance in miles
+ */
+class capDistDetails {
+    protected int numa;
+    protected String ida;
+    protected int numb;
+    protected String idb;
+    protected int kmdist;
+
+    public int getNuma() {
+        return numa;
+    }
+
+    public String getIda() {
+        return ida;
+    }
+
+    public int getNumb() {
+        return numb;
+    }
+
+    public String getIdb() {
+        return idb;
+    }
+
+    public int getKmdist() {
+        return kmdist;
+    }
+}
+
+/**
+ * object with details from State Name file
+ * removed start date of countries
+ */
+class stateNameDetails {
+    protected int stateNum;
+    protected String stateID;
+    protected String countryName;
+    protected String alias;
+    protected String end;
+    protected int indexInGraph;
+
+    public int getStateNum() {
+        return stateNum;
+    }
+
+    public String getStateID() {
+        return stateID;
+    }
+
+    public String getCountryName() {
+        return countryName;
+    }
+    public String getAlias() {
+        return alias;
+    }
+
+    public String getEnd() {
+        return end;
+    }
+    public int getIndexInGraph() {
+        return indexInGraph;
+    }
+}
+
+/**
+ * object with details from Borders file
+ */
+class bordersDetails {
+    public String country;
+    public HashMap<String, Integer> conInfo = new HashMap<>();
 }

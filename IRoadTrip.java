@@ -5,10 +5,11 @@ import java.util.Scanner;
 /*Questions:
 same input files all the time?
 inconsistent naming: "Korea, People's Republic of" and "Macedonia (Former Yugoslav Republic of)"
+size of adjacency list? how many vertices
  */
 
 /*TODO:
-   import all object arraylists into graph
+   import all object arraylists into graph: how to make an adjacency list of strings?? have edge n stuff
    handle countries with weird alias and commas? example: Korea, People's Republic of
    handle for diff input files i guess?
  */
