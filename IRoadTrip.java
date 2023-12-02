@@ -5,34 +5,31 @@ import java.util.Scanner;
 /*Questions:
 same input files all the time?
 inconsistent naming: "Korea, People's Republic of" and "Macedonia (Former Yugoslav Republic of)"
-size of adjacency list? how many vertices
+size of adjacency list? num of valid countries in state_name?
  */
 
 /*TODO:
-   import all object arraylists into graph: how to make an adjacency list of strings?? have edge n stuff
-   handle countries with weird alias and commas? example: Korea, People's Republic of
-   handle for diff input files i guess?
+    reset costs in Edge at the end of dijkstras?
+    import all object arraylists into graph
+    handle countries from capdist that dont share borders
+    handle countries with weird alias and commas? example: Korea, People's Republic of
+    handle for diff input files i guess?
  */
 
 public class IRoadTrip {
 
     Graph graph;
     public IRoadTrip (String [] args) {
-        // Replace with your code
         graph = new Graph(args[0], args[1], args[2]);
-        System.out.println();
     }
 
     public int getDistance (String country1, String country2) {
-        // Replace with your code
         return -1;
     }
 
 
     public List<String> findPath (String country1, String country2) {
-        // Replace with your code
-        List<String> path = new LinkedList<>();
-        return path;
+        return graph.findShortestPath(country1, country2);
     }
 
 
@@ -58,6 +55,7 @@ public class IRoadTrip {
 
         List<String> path = findPath(country1, country2);
         if (path.size() > 0) {
+            System.out.println("Route from " + country1 + " to " + country2 + ":");
             for (String p : path) {
                 System.out.println(p);
             }

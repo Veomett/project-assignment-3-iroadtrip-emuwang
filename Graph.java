@@ -1,28 +1,125 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.reflect.Array;
+import java.util.*;
 
-class Edge {
-    String source;
-    String dest;
-    int dist;
+public class Graph {
+    private final int MAX_VALUE = Integer.MAX_VALUE;
 
-    Edge(String v1, String v2, int d) {
-        source = v1;
-        dest = v2;
-        dist = d;
+    private class Edge implements Comparable<Edge>{
+        String source;
+        String dest;
+        int dist;
+        boolean visited;
+        int distFromSource;
+        int cost;
+        Edge(String v1, String v2, int d) {
+            source = v1;
+            dest = v2;
+            dist = d;
+            visited = false;
+        }
+        @Override
+        public int compareTo(Edge e) {
+            return this.cost - e.cost;
+        }
     }
-}
 
-public class Graph { //implementation for graph structure as well as its functions like dijkstras
-    //use adjacency list for undirected weighted graph
+    class costNode implements Comparable<costNode>{
+        String source;
+        String dest;
+        int cost;
+        costNode(String s, String d, int c) {
+            source = s;
+            dest = d;
+            cost = c;
+        }
+        @Override
+        public int compareTo(costNode n) {
+            return Integer.compare(this.cost, n.cost);
+        }
+    }
 
+    public void dijkstra(PriorityQueue<Edge> edgeQueue, String[] path, int[] finalDistances, String source) {
+        for (int i = 0; i < snDetails.size(); i++) {
+            path[i] = null;
+            finalDistances[i] = MAX_VALUE;
+        }
+
+        //add Edges from source
+        for (Edge e : adjacencyList[getIndexWithCountry(source)]) {
+            if (!edgeQueue.contains(e)) {
+                e.cost += e.dist;
+                edgeQueue.add(e);
+                e.visited = true;
+                e.distFromSource = 0;
+            }
+        }
+
+        //loop while the PQueue is not empty to handle all connections
+        while (!edgeQueue.isEmpty()) {
+            Edge toHandle = edgeQueue.poll();
+            if (toHandle.cost < finalDistances[getIndexWithCountry(toHandle.dest)]) {
+                finalDistances[getIndexWithCountry(toHandle.dest)] = toHandle.cost;
+                path[getIndexWithCountry(toHandle.dest)] = toHandle.source;
+            }
+
+            for (Edge e : adjacencyList[getIndexWithCountry(toHandle.dest)]) {
+                if (!edgeQueue.contains(e) && !e.visited) {
+                    e.cost = finalDistances[getIndexWithCountry(toHandle.dest)] + e.dist;
+                    e.visited = true;
+                    edgeQueue.add(e);
+                }
+            }
+        }
+    }
+
+    public List<String> findShortestPath(String source, String dest) {
+        int max = snDetails.size();
+        PriorityQueue<Edge> edgeQueue = new PriorityQueue<>();
+        String[] path = new String[snDetails.size()];
+        int[] finalDistances = new int[snDetails.size()];
+
+        dijkstra(edgeQueue, path, finalDistances, source);
+
+        String currCountry = dest;
+        Stack<String> pathStack = new Stack<>();
+        while (!currCountry.equals(source)) {
+            int index = getIndexWithCountry(currCountry);
+            String toAdd = "* " + path[getIndexWithCountry(currCountry)] + " --> " + currCountry + " (" + getDistBetweenCountries(path[getIndexWithCountry(currCountry)], currCountry) + " km.)";
+            pathStack.add(toAdd);
+            currCountry = path[getIndexWithCountry(currCountry)];
+        }
+
+        //reset cost and visited for next search
+        for (int i = 0; i < adjacencyList.length; i++) {
+            for (Edge e : adjacencyList[i]) {
+                e.cost = 0;
+                e.visited = false;
+            }
+        }
+
+        LinkedList<String> toReturn = new LinkedList<>();
+        while (!pathStack.isEmpty()) {
+            toReturn.add(pathStack.pop());
+        }
+        return toReturn;
+    }
+
+    private int getDistBetweenCountries(String source, String dest) {
+        for (capDistDetails c: cdDetails) {
+            if (checkAliases(c.ida, source) && checkAliases(c.idb, dest)) {
+                return c.kmdist;
+            }
+        }
+        return -1;
+    }
+
+    private String[] countryInAdjList;
     private LinkedList<Edge>[] adjacencyList;
-    private List<capDistDetails> cdDetails = new ArrayList<>();
+    private costNode[] costs;
+    public List<capDistDetails> cdDetails = new ArrayList<>();
     private List<stateNameDetails> snDetails = new ArrayList<>();
     private List<bordersDetails> bDetails = new ArrayList<>();
 
@@ -30,33 +127,61 @@ public class Graph { //implementation for graph structure as well as its functio
         makeBorderDetails(bordersFile);
         makeCapDistDetails(capdistFile);
         makeStateNameDetails(statenameFile);
+        countryInAdjList = new String[snDetails.size()];
         adjacencyList = new LinkedList[snDetails.size()];
+        costs = new costNode[snDetails.size()];
         for (int i = 0; i < snDetails.size(); i++) {
             adjacencyList[i] = new LinkedList<>();
+            countryInAdjList[i] = snDetails.get(i).countryName;
+            costs[i] = new costNode(countryInAdjList[i], null, MAX_VALUE);
         }
         for (int i = 0; i < cdDetails.size(); i++) {
             String source = getCountryWithID(cdDetails.get(i).ida);
             String dest = getCountryWithID(cdDetails.get(i).idb);
             if (source != null && dest != null) {
-                addEdge(source, dest, cdDetails.get(i).getKmdist());
-                System.out.println("going to add edge - countryA: " + getCountryWithID(cdDetails.get(i).ida) + ", countryB: " + getCountryWithID(cdDetails.get(i).idb) + ", dist: " + cdDetails.get(i).getKmdist());
+                for (bordersDetails b: bDetails) {
+                    if (source.equals(b.country) || checkAliases(b.country, source)) {
+                        for (int j = 0; j < b.connectingCountry.size(); j++) {
+                            if (b.connectingCountry.get(j).equals(dest) || checkAliases(b.connectingCountry.get(j), dest)) {
+                                addEdge(source, dest, cdDetails.get(i).kmdist);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 
+        /*
+        //DELETE LATER
         for (int i = 0; i < adjacencyList.length; i++) {
+            System.out.print(countryInAdjList[i] + " has " + adjacencyList[i].size() + " connections in graph: ");
+
             for (Edge e: adjacencyList[i]) {
-                System.out.print(e.source + " connects to " + e.dest + ", dist: " + e.dist + "| ");
+                System.out.print(e.dest + ", dist: " + e.dist + "| ");
             }
             System.out.println();
         }
+
+         */
+
+    }
+
+    private int getIndexWithCountry(String country) {
+        int count = 0;
+        for (stateNameDetails s: snDetails) {
+            if (s.countryName.equals(country))
+                return count;
+            count++;
+        }
+        return -1;
     }
 
     private String getCountryWithID(String ID) {
         for (stateNameDetails s: snDetails) {
-            if (s.getStateID().equals(ID))
-                return s.getCountryName();
+            if (s.stateID.equals(ID))
+                return s.countryName;
         }
-        System.out.println("Country not found, returning null: " + ID);
         return null;
     }
 
@@ -65,13 +190,31 @@ public class Graph { //implementation for graph structure as well as its functio
         int index = -1;
         int count = 0;
         for (stateNameDetails s: snDetails) {
-            if (s.getCountryName().equals(v1)) {
+            if (s.countryName.equals(v1)) {
                 index = count;
                 break;
             }
             count++;
         }
         adjacencyList[index].add(e);
+    }
+
+    private boolean checkAliases(String country, stateNameDetails s) {
+        for (int i = 0; i < s.alias.size(); i++) {
+            if (s.alias.get(i).equalsIgnoreCase(country))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean checkAliases(String country, String source) {
+        for (stateNameDetails s: snDetails) {
+            if (s.countryName.equals(source)) {
+                if (checkAliases(country, s))
+                    return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -81,27 +224,24 @@ public class Graph { //implementation for graph structure as well as its functio
      */
     public boolean checkExistence(String country) {
         for (stateNameDetails s: snDetails) {
-            System.out.println("Checking for " + country + " in " + s.getCountryName() + " and " + s.getAlias());
-            if (country.equalsIgnoreCase(s.getCountryName()) || country.equalsIgnoreCase(s.getAlias())) {
-                //if (s.end.equals("2020-12-31")) //check if country still exists
-                    return true;
-            }
+            if (country.equalsIgnoreCase(s.countryName) || checkAliases(country, s))
+                return true;
         }
         return false;
     }
+
 
     /**
      * helper method used in makeBorderDetails() to parse second part of input string for country, dist pair
      * @param str second part of input string
      * @return HashMap of country and distance pairs to put into bDetails arraylist
      */
-    private HashMap<String, Integer> getConInfo (String str) {
-        HashMap<String, Integer> temp = new HashMap<>();
+    private ArrayList<String> getConInfo (String str) {
+        ArrayList<String> temp = new ArrayList<>();
         String[] fullStr = str.split(";");
         for (int i = 0; i < fullStr.length; i++) {
             String country = (fullStr[i].split("[0-9]")[0]).strip();
-            String dist = fullStr[i].replaceAll("[^0-9]", "");
-            temp.put(country, Integer.parseInt(dist));
+            temp.add(country);
         }
         return temp;
     }
@@ -127,11 +267,11 @@ public class Graph { //implementation for graph structure as well as its functio
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
                     switch (i) {
                         case 0:
-                            temp.country = strArr[i];
+                            temp.country = strArr[i].strip();
                             break;
                         case 1:
                             if (!strArr[i].isBlank()) {
-                                temp.conInfo = getConInfo(strArr[i]);
+                                temp.connectingCountry = getConInfo(strArr[i]);
                             }
                             break;
                     }
@@ -192,6 +332,52 @@ public class Graph { //implementation for graph structure as well as its functio
         }
     }
 
+    private void addExtraAliases(stateNameDetails temp) {
+        temp.alias.add(temp.stateID);
+        switch (temp.stateID) {
+            case "DRC":
+                temp.alias.add("Congo, Democratic Republic of");
+                temp.alias.add("Congo, Democratic Republic of the");
+                temp.alias.add("Democratic Republic of the Congo");
+                break;
+            case "PRK":
+                temp.alias.add("North Korea");
+                temp.alias.add("Korea, North");
+                break;
+            case "ROK":
+                temp.alias.add("South Korea");
+                temp.alias.add("Korea, South");
+                break;
+            case "DRV":
+                temp.alias.add("Vietnam");
+                temp.alias.add("Annam");
+                temp.alias.add("Cochin China");
+                temp.alias.add("Tonkin");
+                temp.alias.add("VNM");
+                temp.alias.add("RVN");
+                break;
+            case "TAZ":
+                temp.alias.add("Tanzania");
+                temp.alias.add("Tanganyika");
+                temp.alias.add("Zanzibar");
+                temp.alias.add("ZAN");
+                temp.alias.add("TAN");
+                break;
+            case "USA":
+                temp.alias.add("United States");
+                temp.alias.add("US");
+                break;
+            case "DEN":
+                temp.alias.add("Greenland");
+                temp.alias.add("Denmark (Greenland)");
+                break;
+            case "BHM":
+                temp.alias.add("Bahamas, The");
+                temp.alias.add("The Bahamas");
+                break;
+        }
+    }
+
     /**
      * helper method to create snDetails arraylist
      * @param fileName to read from
@@ -224,7 +410,7 @@ public class Graph { //implementation for graph structure as well as its functio
                                 if (strArr[i].contains("(")) {
                                     String[] smallStr = strArr[i].split("\\(");
                                     temp.countryName = smallStr[0].trim();
-                                    temp.alias = smallStr[1].replace(")", "").trim();
+                                    temp.alias.add(smallStr[1].replace(")", "").trim());
                                 } else {
                                     temp.countryName = strArr[i];
                                 }
@@ -235,21 +421,27 @@ public class Graph { //implementation for graph structure as well as its functio
                         }
                     }
                 }
+
                 if (temp.countryName != null) {
+                    addExtraAliases(temp);
                     snDetails.add(temp);
-                    System.out.println("Added country: " + temp.getCountryName() + ", alias: " + temp.getAlias());
                 }
             }
-            System.out.println("Size of snDetails: " + snDetails.size());
             bfReader.close();
         } catch (Exception e) {
             System.out.println(e);
             System.exit(0);
         }
     }
-
 }
 
+/**
+ * object with details from Borders file
+ */
+class bordersDetails {
+    public String country;
+    public List<String> connectingCountry = new ArrayList<>();
+}
 
 /**
  * object with details from Capital Distance file
@@ -261,26 +453,6 @@ class capDistDetails {
     protected int numb;
     protected String idb;
     protected int kmdist;
-
-    public int getNuma() {
-        return numa;
-    }
-
-    public String getIda() {
-        return ida;
-    }
-
-    public int getNumb() {
-        return numb;
-    }
-
-    public String getIdb() {
-        return idb;
-    }
-
-    public int getKmdist() {
-        return kmdist;
-    }
 }
 
 /**
@@ -291,37 +463,7 @@ class stateNameDetails {
     protected int stateNum;
     protected String stateID;
     protected String countryName;
-    protected String alias;
+    protected List<String> alias = new ArrayList<>();
     protected String end;
-    protected int indexInGraph;
-
-    public int getStateNum() {
-        return stateNum;
-    }
-
-    public String getStateID() {
-        return stateID;
-    }
-
-    public String getCountryName() {
-        return countryName;
-    }
-    public String getAlias() {
-        return alias;
-    }
-
-    public String getEnd() {
-        return end;
-    }
-    public int getIndexInGraph() {
-        return indexInGraph;
-    }
 }
 
-/**
- * object with details from Borders file
- */
-class bordersDetails {
-    public String country;
-    public HashMap<String, Integer> conInfo = new HashMap<>();
-}
