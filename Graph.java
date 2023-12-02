@@ -1,18 +1,29 @@
+/**
+ * The Graph class contains functions related to building and performing operations(such as dijkstra's algorithm)
+ * on the graph, as well as 3 separate objects that store data from given files
+ */
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.*;
 
 public class Graph {
-    private final int MAX_VALUE = Integer.MAX_VALUE;
+    private final int MAX_VALUE = Integer.MAX_VALUE; //maximum possible value used in dijkstra's algorithm
 
     private class Edge implements Comparable<Edge>{
         String source;
         String dest;
         int dist;
         boolean visited;
-        int distFromSource;
-        int cost;
+        int cost; //cost of the node(or the distance from source)
+
+        /**
+         * default constructor that initializes an Edge object
+         * @param v1 source country
+         * @param v2 destination country
+         * @param d distance between two countries in kilometers
+         */
         Edge(String v1, String v2, int d) {
             source = v1;
             dest = v2;
@@ -20,13 +31,20 @@ public class Graph {
             visited = false;
         }
 
-        @Override
+        @Override //to be used in a min heap during dijkstra's
         public int compareTo(Edge e) {
             return this.cost - e.cost;
         }
     }
 
-    public void dijkstra(PriorityQueue<Edge> edgeQueue, String[] path, int[] finalDistances, String source) {
+    /**
+     * implementation of dijkstra's algorithm using a min heap
+     * @param edgeQueue
+     * @param path
+     * @param finalDistances
+     * @param source
+     */
+    private void dijkstra(PriorityQueue<Edge> edgeQueue, String[] path, int[] finalDistances, String source) {
         for (int i = 0; i < snDetails.size(); i++) {
             path[i] = null;
             finalDistances[i] = MAX_VALUE;
@@ -38,7 +56,6 @@ public class Graph {
                 e.cost += e.dist;
                 edgeQueue.add(e);
                 e.visited = true;
-                e.distFromSource = 0;
             }
         }
 
@@ -53,7 +70,6 @@ public class Graph {
             for (Edge e : adjacencyList[getIndexWithCountry(toHandle.dest)]) {
                 if (!edgeQueue.contains(e) && !e.visited) {
                     e.cost = finalDistances[getIndexWithCountry(toHandle.dest)] + e.dist;
-                    e.distFromSource += e.dist;
                     e.visited = true;
                     edgeQueue.add(e);
                 }
@@ -61,45 +77,55 @@ public class Graph {
         }
     }
 
+    /**
+     * searches for the shortest path between two given countries
+     * @param source
+     * @param dest
+     * @return a List containing the path, returns an empty List if no path exist
+     */
     public List<String> findShortestPath(String source, String dest) {
         int max = snDetails.size();
         PriorityQueue<Edge> edgeQueue = new PriorityQueue<>();
         String[] path = new String[max];
         int[] finalDistances = new int[max];
 
-        String currCountry = dest;
-
+        //get array of all possible paths and final distances corresponding to the path using Dijkstra's algorithm
         dijkstra(edgeQueue, path, finalDistances, source);
-
-        Stack<String> pathStack = new Stack<>();
-        while (!currCountry.equals(source)) {
-            int index = getIndexWithCountry(currCountry);
-            if (path[index] != null) {
-                String toAdd = "* " + path[index] + " --> " + currCountry + " (" + getDistBetweenCountries(path[index], currCountry) + " km.)";
-                pathStack.add(toAdd);
-                currCountry = path[index];
-            } else {
-                pathStack = new Stack<>();
-                break;
-            }
-        }
-
-        //reset cost and visited for next search
-        for (int i = 0; i < adjacencyList.length; i++) {
+        for (int i = 0; i < adjacencyList.length; i++) { //reset all costs and visited for next use
             for (Edge e : adjacencyList[i]) {
                 e.cost = 0;
                 e.visited = false;
             }
         }
 
+        //build LinkedList to return by putting everything into a Stack first
+        String currCountry = dest;
+        Stack<String> pathStack = new Stack<>(); //using Stack because of its FILO nature
+        while (!currCountry.equals(source)) {
+            int index = getIndexWithCountry(currCountry);
+            if (path[index] != null) { //path exists
+                String toAdd = "* " + path[index] + " --> " + currCountry + " (" + getDistBetweenCountries(path[index], currCountry) + " km.)";
+                pathStack.add(toAdd);
+                currCountry = path[index];
+            } else { //path doesn't exist, prepare to return an empty LinkedList
+                pathStack = new Stack<>();
+                break;
+            }
+        }
         LinkedList<String> toReturn = new LinkedList<>();
-        while (!pathStack.isEmpty()) {
+        while (!pathStack.isEmpty()) { //transfer data from Stack into LinkedList
             toReturn.add(pathStack.pop());
         }
         return toReturn;
     }
 
-    private int getDistBetweenCountries(String source, String dest) {
+    /**
+     * helper function used in findShortestPath to build the return LinkedList
+     * @param source
+     * @param dest
+     * @return distance between the two countries, returns -1 if two countries aren't connected
+     */
+    public int getDistBetweenCountries(String source, String dest) {
         for (capDistDetails c: cdDetails) {
             if (checkAliases(c.ida, source) && checkAliases(c.idb, dest)) {
                 return c.kmdist;
@@ -114,6 +140,12 @@ public class Graph {
     private List<stateNameDetails> snDetails = new ArrayList<>();
     private List<bordersDetails> bDetails = new ArrayList<>();
 
+    /**
+     * default constructor for a Graph object
+     * @param bordersFile file name for borders
+     * @param capdistFile file name for capital distances
+     * @param statenameFile file name for state names
+     */
     public Graph (String bordersFile, String capdistFile, String statenameFile) {
         makeBorderDetails(bordersFile);
         makeCapDistDetails(capdistFile);
@@ -141,19 +173,12 @@ public class Graph {
             }
         }
 
-
-        //DELETE LATER
-        for (int i = 0; i < adjacencyList.length; i++) {
-            System.out.print(countryInAdjList[i] + " has " + adjacencyList[i].size() + " connections in graph: ");
-
-            for (Edge e: adjacencyList[i]) {
-                System.out.print(e.dest + ", dist: " + e.dist + "| ");
-            }
-            System.out.println();
-        }
-
     }
 
+    /**
+     * @param country
+     * @return the index of the country given
+     */
     private int getIndexWithCountry(String country) {
         int count = 0;
         for (stateNameDetails s: snDetails) {
@@ -164,6 +189,10 @@ public class Graph {
         return -1;
     }
 
+    /**
+     * @param ID
+     * @return the country from ID given
+     */
     private String getCountryWithID(String ID) {
         for (stateNameDetails s: snDetails) {
             if (s.stateID.equals(ID))
@@ -172,6 +201,12 @@ public class Graph {
         return null;
     }
 
+    /**
+     * helper function to create a graph
+     * @param v1 source country
+     * @param v2 destination country
+     * @param weight distance between source and destination.
+     */
     private void addEdge(String v1, String v2, int weight) {
         Edge e = new Edge(v1, v2, weight);
         int index = -1;
@@ -186,6 +221,12 @@ public class Graph {
         adjacencyList[index].add(e);
     }
 
+    /**
+     * check if alias exists given a country and a stateNameDetails object
+     * @param country
+     * @param s
+     * @return true/false
+     */
     private boolean checkAliases(String country, stateNameDetails s) {
         for (int i = 0; i < s.alias.size(); i++) {
             if (s.alias.get(i).equalsIgnoreCase(country))
@@ -194,6 +235,12 @@ public class Graph {
         return false;
     }
 
+    /**
+     * check if source exists in the country's aliases
+     * @param country to check if source alias exists
+     * @param source alias to be checked
+     * @return true/false
+     */
     private boolean checkAliases(String country, String source) {
         for (stateNameDetails s: snDetails) {
             if (s.countryName.equals(source)) {
@@ -217,20 +264,32 @@ public class Graph {
         return false;
     }
 
-
     /**
-     * helper method used in makeBorderDetails() to parse second part of input string for country, dist pair
+     * helper method used in makeBorderDetails() to parse second part of input string for country
      * @param str second part of input string
-     * @return HashMap of country and distance pairs to put into bDetails arraylist
+     * @return ArrayList containing all bordering countries
      */
     private ArrayList<String> getConInfo (String str) {
         ArrayList<String> temp = new ArrayList<>();
         String[] fullStr = str.split(";");
         for (int i = 0; i < fullStr.length; i++) {
             String country = (fullStr[i].split("[0-9]")[0]).replaceAll("\\(.*?\\)","").strip();
-            if (fullStr.equals("Morocco (Ceuta) 8 km"))
-                System.out.println(country);
             temp.add(country);
+        }
+        return temp;
+    }
+
+    /**
+     * helper method used in makeBorderDetails() to parse second part of input string for distance between countries
+     * @param str second part of input string
+     * @return ArrayList containing distances of all bodering countries
+     */
+    private ArrayList<Integer> getDistInfo (String str) {
+        ArrayList<Integer> temp = new ArrayList<>();
+        String[] fullStr = str.split(";");
+        for (int i = 0; i < fullStr.length; i++) {
+            int dist = Integer.parseInt(fullStr[i].replaceAll("[^0-9]", ""));
+            temp.add(dist);
         }
         return temp;
     }
@@ -261,9 +320,7 @@ public class Graph {
                         case 1:
                             if (!strArr[i].isBlank()) {
                                 temp.connectingCountry = getConInfo(strArr[i]);
-                            }
-                            if (temp.country.equals("Morocco") || temp.country.equals("Spain")) {
-                                System.out.println(temp.connectingCountry);
+                                temp.distance = getDistInfo(strArr[i]);
                             }
                             break;
                     }
@@ -273,7 +330,7 @@ public class Graph {
             bfReader.close();
         } catch (Exception e) {
             System.out.println(e);
-            System.exit(0);
+            System.exit(-1);
         }
     }
 
@@ -320,10 +377,14 @@ public class Graph {
             bfReader.close();
         } catch (Exception e) {
             System.out.println(e);
-            System.exit(0);
+            System.exit(-1);
         }
     }
 
+    /**
+     * helper method called in makeStateNameDetails() to add any extra aliases that might come up
+     * @param temp stateNameDetails object to pass back and add to ArrayList
+     */
     private void addExtraAliases(stateNameDetails temp) {
         temp.alias.add(temp.stateID);
         switch (temp.stateID) {
@@ -426,7 +487,7 @@ public class Graph {
             bfReader.close();
         } catch (Exception e) {
             System.out.println(e);
-            System.exit(0);
+            System.exit(-1);
         }
     }
 }
@@ -437,6 +498,7 @@ public class Graph {
 class bordersDetails {
     public String country;
     public List<String> connectingCountry = new ArrayList<>();
+    public List<Integer> distance;
 }
 
 /**
