@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class Graph {
@@ -20,24 +19,10 @@ public class Graph {
             dist = d;
             visited = false;
         }
+
         @Override
         public int compareTo(Edge e) {
             return this.cost - e.cost;
-        }
-    }
-
-    class costNode implements Comparable<costNode>{
-        String source;
-        String dest;
-        int cost;
-        costNode(String s, String d, int c) {
-            source = s;
-            dest = d;
-            cost = c;
-        }
-        @Override
-        public int compareTo(costNode n) {
-            return Integer.compare(this.cost, n.cost);
         }
     }
 
@@ -68,6 +53,7 @@ public class Graph {
             for (Edge e : adjacencyList[getIndexWithCountry(toHandle.dest)]) {
                 if (!edgeQueue.contains(e) && !e.visited) {
                     e.cost = finalDistances[getIndexWithCountry(toHandle.dest)] + e.dist;
+                    e.distFromSource += e.dist;
                     e.visited = true;
                     edgeQueue.add(e);
                 }
@@ -78,18 +64,24 @@ public class Graph {
     public List<String> findShortestPath(String source, String dest) {
         int max = snDetails.size();
         PriorityQueue<Edge> edgeQueue = new PriorityQueue<>();
-        String[] path = new String[snDetails.size()];
-        int[] finalDistances = new int[snDetails.size()];
+        String[] path = new String[max];
+        int[] finalDistances = new int[max];
+
+        String currCountry = dest;
 
         dijkstra(edgeQueue, path, finalDistances, source);
 
-        String currCountry = dest;
         Stack<String> pathStack = new Stack<>();
         while (!currCountry.equals(source)) {
             int index = getIndexWithCountry(currCountry);
-            String toAdd = "* " + path[getIndexWithCountry(currCountry)] + " --> " + currCountry + " (" + getDistBetweenCountries(path[getIndexWithCountry(currCountry)], currCountry) + " km.)";
-            pathStack.add(toAdd);
-            currCountry = path[getIndexWithCountry(currCountry)];
+            if (path[index] != null) {
+                String toAdd = "* " + path[index] + " --> " + currCountry + " (" + getDistBetweenCountries(path[index], currCountry) + " km.)";
+                pathStack.add(toAdd);
+                currCountry = path[index];
+            } else {
+                pathStack = new Stack<>();
+                break;
+            }
         }
 
         //reset cost and visited for next search
@@ -118,7 +110,6 @@ public class Graph {
 
     private String[] countryInAdjList;
     private LinkedList<Edge>[] adjacencyList;
-    private costNode[] costs;
     public List<capDistDetails> cdDetails = new ArrayList<>();
     private List<stateNameDetails> snDetails = new ArrayList<>();
     private List<bordersDetails> bDetails = new ArrayList<>();
@@ -129,11 +120,9 @@ public class Graph {
         makeStateNameDetails(statenameFile);
         countryInAdjList = new String[snDetails.size()];
         adjacencyList = new LinkedList[snDetails.size()];
-        costs = new costNode[snDetails.size()];
         for (int i = 0; i < snDetails.size(); i++) {
             adjacencyList[i] = new LinkedList<>();
             countryInAdjList[i] = snDetails.get(i).countryName;
-            costs[i] = new costNode(countryInAdjList[i], null, MAX_VALUE);
         }
         for (int i = 0; i < cdDetails.size(); i++) {
             String source = getCountryWithID(cdDetails.get(i).ida);
@@ -152,7 +141,7 @@ public class Graph {
             }
         }
 
-        /*
+
         //DELETE LATER
         for (int i = 0; i < adjacencyList.length; i++) {
             System.out.print(countryInAdjList[i] + " has " + adjacencyList[i].size() + " connections in graph: ");
@@ -162,8 +151,6 @@ public class Graph {
             }
             System.out.println();
         }
-
-         */
 
     }
 
@@ -240,7 +227,9 @@ public class Graph {
         ArrayList<String> temp = new ArrayList<>();
         String[] fullStr = str.split(";");
         for (int i = 0; i < fullStr.length; i++) {
-            String country = (fullStr[i].split("[0-9]")[0]).strip();
+            String country = (fullStr[i].split("[0-9]")[0]).replaceAll("\\(.*?\\)","").strip();
+            if (fullStr.equals("Morocco (Ceuta) 8 km"))
+                System.out.println(country);
             temp.add(country);
         }
         return temp;
@@ -267,11 +256,14 @@ public class Graph {
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
                     switch (i) {
                         case 0:
-                            temp.country = strArr[i].strip();
+                            temp.country = strArr[i].replaceAll("\\(.*?\\)","").strip();
                             break;
                         case 1:
                             if (!strArr[i].isBlank()) {
                                 temp.connectingCountry = getConInfo(strArr[i]);
+                            }
+                            if (temp.country.equals("Morocco") || temp.country.equals("Spain")) {
+                                System.out.println(temp.connectingCountry);
                             }
                             break;
                     }
@@ -375,6 +367,10 @@ public class Graph {
                 temp.alias.add("Bahamas, The");
                 temp.alias.add("The Bahamas");
                 break;
+            case "MOR":
+                temp.alias.add("Morocco (Ceuta)");
+            case "Spain":
+                temp.alias.add("Spain (Ceuta)");
         }
     }
 
