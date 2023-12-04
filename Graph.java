@@ -312,10 +312,10 @@ public class Graph {
         try {
             BufferedReader bfReader = new BufferedReader(new FileReader(f));
             while (true) {
-                String str = bfReader.readLine(); //read second line
+                String str = bfReader.readLine(); //read next line
                 if (str == null) //loop until next line is null/empty
                     break;
-                String[] strArr = str.split("="); //split lines from csv file using "="
+                String[] strArr = str.split("="); //split lines from txt file using "="
                 bordersDetails temp = new bordersDetails();
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
                     switch (i) {
@@ -465,7 +465,7 @@ public class Graph {
                 str = bfReader.readLine(); //read second line
                 if (str == null) //loop until next line is null/empty
                     break;
-                String[] strArr = str.split("\t"); //split lines from csv file using the tab character
+                String[] strArr = str.split("\t"); //split lines from tsv file using the tab character
                 stateNameDetails temp = new stateNameDetails(); //initialize object
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
                     if (strArr[4].equals("2020-12-31")) {
