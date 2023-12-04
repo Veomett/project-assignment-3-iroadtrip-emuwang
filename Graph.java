@@ -299,11 +299,16 @@ public class Graph {
      * @param fileName to read from
      */
     private void makeBorderDetails(String fileName) {
+        if (fileName.contains(".tsv") || fileName.contains(".csv")){
+            System.out.println("Wrong file type for Borders file (args[0]). Requires a .txt file. Exiting...");
+            System.exit(-1);
+        }
         File f = new File(fileName);
         if (!f.exists()) {
             System.out.println("Given file for Border Details does not exist. Proceeding with default file.");
             f = new File("borders.txt");
         }
+
         try {
             BufferedReader bfReader = new BufferedReader(new FileReader(f));
             while (true) {
@@ -329,7 +334,7 @@ public class Graph {
             }
             bfReader.close();
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error parsing borders file: " + e);
             System.exit(-1);
         }
     }
@@ -339,6 +344,10 @@ public class Graph {
      * @param fileName to read from
      */
     private void makeCapDistDetails(String fileName) {
+        if (fileName.contains(".txt") || fileName.contains(".tsv")){
+            System.out.println("Wrong file type for Capital Distance file (args[1]). Requires a .csv file. Exiting...");
+            System.exit(-1);
+        }
         File f = new File(fileName);
         if (!f.exists()) {
             System.out.println("Given file for Capital Distance does not exist. Proceeding with default file.");
@@ -376,7 +385,7 @@ public class Graph {
             }
             bfReader.close();
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error parsing capital distance file: " + e);
             System.exit(-1);
         }
     }
@@ -440,10 +449,14 @@ public class Graph {
      * @param fileName to read from
      */
     private void makeStateNameDetails(String fileName) {
+        if (fileName.contains(".txt") || fileName.contains(".csv")){
+            System.out.println("Wrong file type for State Name file (args[2]). Requires a .tsv file. Exiting...");
+            System.exit(-1);
+        }
         File f = new File(fileName);
         if (!f.exists()) {
             System.out.println("Given file for State Name does not exist. Proceeding with default file.");
-            f = new File("state_name.csv");
+            f = new File("state_name.tsv");
         }
         try {
             BufferedReader bfReader = new BufferedReader(new FileReader(f));
@@ -486,7 +499,7 @@ public class Graph {
             }
             bfReader.close();
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error parsing state names file: " + e);
             System.exit(-1);
         }
     }

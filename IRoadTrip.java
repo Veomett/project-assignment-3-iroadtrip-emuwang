@@ -13,7 +13,13 @@ public class IRoadTrip {
         if (args.length == 3) {
             graph = new Graph(args[0], args[1], args[2]);
         } else {
-            System.out.println("Invalid Arguments, must have the names of files.");
+            System.out.println("Invalid Argument Format.");
+            System.out.print("Given:");
+            for (String s: args) {
+                System.out.print(" " + s);
+            }
+            System.out.println("");
+            System.out.println("Expected: <border_file>.txt <capdist_file>.csv <statename_file>.tsv");
             System.exit(-1);
         }
     }
@@ -79,6 +85,7 @@ public class IRoadTrip {
      */
     private boolean checkValidity (String country) {
         if (country.equals("EXIT"))
+            System.out.println("Exiting...");
             System.exit(0);
         if (!graph.checkExistence(country)) {
             System.out.println("Invalid country name. Please enter a valid country name.");
