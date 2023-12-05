@@ -126,9 +126,13 @@ public class Graph {
      * @return distance between the two countries, returns -1 if two countries aren't connected
      */
     public int getDistBetweenCountries(String source, String dest) {
-        for (capDistDetails c: cdDetails) {
-            if (checkAliases(c.ida, source) && checkAliases(c.idb, dest)) {
-                return c.kmdist;
+        for (int i = 0; i < adjacencyList.length; i++) {
+            if (source.equals(countryInAdjList[i]) || checkAliases(countryInAdjList[i], source)) {
+                for (Edge e: adjacencyList[i]) {
+                    if (dest.equals(e.dest)) {
+                        return e.dist;
+                    }
+                }
             }
         }
         return -1;
@@ -168,11 +172,11 @@ public class Graph {
                                 break;
                             }
                         }
+                        break;
                     }
                 }
             }
         }
-
     }
 
     /**

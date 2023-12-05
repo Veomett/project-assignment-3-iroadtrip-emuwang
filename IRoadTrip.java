@@ -84,9 +84,10 @@ public class IRoadTrip {
      * @return
      */
     private boolean checkValidity (String country) {
-        if (country.equals("EXIT"))
+        if (country.equalsIgnoreCase("EXIT")) {
             System.out.println("Exiting...");
             System.exit(0);
+        }
         if (!graph.checkExistence(country)) {
             System.out.println("Invalid country name. Please enter a valid country name.");
             return false;
