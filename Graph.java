@@ -101,7 +101,7 @@ public class Graph {
         //build LinkedList to return by putting everything into a Stack first
         String currCountry = dest;
         Stack<String> pathStack = new Stack<>(); //using Stack because of its FILO nature
-        while (!currCountry.equals(source)) {
+        while (!currCountry.equalsIgnoreCase(source)) {
             int index = getIndexWithCountry(currCountry);
             if (path[index] != null) { //path exists
                 String toAdd = "* " + path[index] + " --> " + currCountry + " (" + getDistBetweenCountries(path[index], currCountry) + " km.)";
@@ -111,6 +111,8 @@ public class Graph {
                 pathStack = new Stack<>();
                 break;
             }
+            if (checkAliases(source, currCountry))
+                break;
         }
         LinkedList<String> toReturn = new LinkedList<>();
         while (!pathStack.isEmpty()) { //transfer data from Stack into LinkedList
@@ -127,9 +129,9 @@ public class Graph {
      */
     public int getDistBetweenCountries(String source, String dest) {
         for (int i = 0; i < adjacencyList.length; i++) {
-            if (source.equals(countryInAdjList[i]) || checkAliases(countryInAdjList[i], source)) {
+            if (source.equalsIgnoreCase(countryInAdjList[i]) || checkAliases(source, countryInAdjList[i])) {
                 for (Edge e: adjacencyList[i]) {
-                    if (dest.equals(e.dest)) {
+                    if (dest.equalsIgnoreCase(e.dest) || checkAliases(dest, e.dest)) {
                         return e.dist;
                     }
                 }
@@ -165,9 +167,9 @@ public class Graph {
             String dest = getCountryWithID(cdDetails.get(i).idb);
             if (source != null && dest != null) {
                 for (bordersDetails b: bDetails) {
-                    if (source.equals(b.country) || checkAliases(b.country, source)) {
+                    if (source.equalsIgnoreCase(b.country) || checkAliases(b.country, source)) {
                         for (int j = 0; j < b.connectingCountry.size(); j++) {
-                            if (b.connectingCountry.get(j).equals(dest) || checkAliases(b.connectingCountry.get(j), dest)) {
+                            if (b.connectingCountry.get(j).equalsIgnoreCase(dest) || checkAliases(b.connectingCountry.get(j), dest)) {
                                 addEdge(source, dest, cdDetails.get(i).kmdist);
                                 break;
                             }
@@ -186,7 +188,7 @@ public class Graph {
     private int getIndexWithCountry(String country) {
         int count = 0;
         for (stateNameDetails s: snDetails) {
-            if (s.countryName.equals(country))
+            if (s.countryName.equalsIgnoreCase(country) || checkAliases(country, s))
                 return count;
             count++;
         }
@@ -199,7 +201,7 @@ public class Graph {
      */
     private String getCountryWithID(String ID) {
         for (stateNameDetails s: snDetails) {
-            if (s.stateID.equals(ID))
+            if (s.stateID.equalsIgnoreCase(ID))
                 return s.countryName;
         }
         return null;
@@ -216,7 +218,7 @@ public class Graph {
         int index = -1;
         int count = 0;
         for (stateNameDetails s: snDetails) {
-            if (s.countryName.equals(v1)) {
+            if (s.countryName.equalsIgnoreCase(v1)) {
                 index = count;
                 break;
             }
@@ -247,7 +249,7 @@ public class Graph {
      */
     private boolean checkAliases(String country, String source) {
         for (stateNameDetails s: snDetails) {
-            if (s.countryName.equals(source)) {
+            if (s.countryName.equalsIgnoreCase(source)) {
                 if (checkAliases(country, s))
                     return true;
             }
@@ -309,8 +311,8 @@ public class Graph {
         }
         File f = new File(fileName);
         if (!f.exists()) {
-            System.out.println("Given file for Border Details does not exist. Proceeding with default file.");
-            f = new File("borders.txt");
+            System.out.println("Given file for Border Details does not exist. Exiting...");
+            System.exit(-1);
         }
 
         try {
@@ -354,8 +356,8 @@ public class Graph {
         }
         File f = new File(fileName);
         if (!f.exists()) {
-            System.out.println("Given file for Capital Distance does not exist. Proceeding with default file.");
-            f = new File("capdist.csv");
+            System.out.println("Given file for Capital Distance does not exist. Exiting...");
+            System.exit(-1);
         }
         try {
             BufferedReader bfReader = new BufferedReader(new FileReader(f));
@@ -443,8 +445,13 @@ public class Graph {
                 break;
             case "MOR":
                 temp.alias.add("Morocco (Ceuta)");
-            case "Spain":
+                break;
+            case "SPN":
                 temp.alias.add("Spain (Ceuta)");
+                break;
+            case "GFR":
+                temp.alias.add("Germany");
+                break;
         }
     }
 
@@ -459,8 +466,8 @@ public class Graph {
         }
         File f = new File(fileName);
         if (!f.exists()) {
-            System.out.println("Given file for State Name does not exist. Proceeding with default file.");
-            f = new File("state_name.tsv");
+            System.out.println("Given file for State Name does not exist. Exiting...");
+            System.exit(-1);
         }
         try {
             BufferedReader bfReader = new BufferedReader(new FileReader(f));
@@ -472,7 +479,7 @@ public class Graph {
                 String[] strArr = str.split("\t"); //split lines from tsv file using the tab character
                 stateNameDetails temp = new stateNameDetails(); //initialize object
                 for (int i = 0; i < strArr.length; i++) { //loop through strArr and input into values
-                    if (strArr[4].equals("2020-12-31")) {
+                    if (strArr[4].equalsIgnoreCase("2020-12-31")) {
                         switch (i) {
                             case 0:
                                 temp.stateNum = Integer.parseInt(strArr[i]);
